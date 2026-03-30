@@ -70,34 +70,42 @@ function getColor(cdk) {
 }
 
 // ======================
-// TITIK PENGURUS
+// TITIK PENGURUS (KOORDINAT DESA)
 // ======================
-fetch('Jaga Leuweung.geojson')
+fetch('pengurus jaga leuweung.geojson')
     .then(response => response.json())
     .then(data => {
         L.geoJSON(data, {
+
             pointToLayer: function(feature, latlng) {
-                return L.circleMarker(latlng, {
+
+                // Ambil koordinat dari atribut Excel (koordinat desa)
+                var lat = feature.properties.latitude;
+                var lng = feature.properties.longitude;
+
+                return L.circleMarker([lat, lng], {
                     radius: 6,
                     color: getColor(feature.properties.cdk),
                     fillColor: getColor(feature.properties.cdk),
                     fillOpacity: 1
                 });
             },
+
             onEachFeature: function(feature, layer) {
                 layer.bindPopup(
-                    "<b>Nama:</b> " + feature.properties.Nama +
-                    "<br><b>NIK:</b> " + feature.properties.NIK +
-                    "<br><b>Usia(Tahun):</b> " + feature.properties.Usia(Tahun) +
-                    "<br><b>Alamat:</b> " + feature.properties.Alamat +
-                    "<br><b>Desa:</b> " + feature.properties.Desa +
-                    "<br><b>Kecamatan:</b> " + feature.properties.Kecamatan +
-                    "<br><b>Kabupaten:</b> " + feature.properties.Kabupaten +
-                    "<br><b>Penyuluh Kehutanan Pendamping:</b> " + feature.properties.PenyuluhKehutananPendamping +
-                    "<br><b>Keterangan:</b> " + feature.properties.Keterangan +
-                    "<br><b>CDK:</b> " + feature.properties.CDK
+                    "<b>Nama:</b> " + feature.properties.nama +
+                    "<br><b>NIK:</b> " + feature.properties.nik +
+                    "<br><b>Usia:</b> " + feature.properties["usia(tahun)"] +
+                    "<br><b>Alamat:</b> " + feature.properties.alamat +
+                    "<br><b>Desa:</b> " + feature.properties.desa +
+                    "<br><b>Kecamatan:</b> " + feature.properties.kecamatan +
+                    "<br><b>Kabupaten:</b> " + feature.properties.kabupaten +
+                    "<br><b>Penyuluh Kehutanan:</b> " + feature.properties["penyuluh kehutanan"] +
+                    "<br><b>Keterangan:</b> " + feature.properties.keterangan +
+                    "<br><b>CDK:</b> " + feature.properties.cdk
                 );
             }
+
         }).addTo(map);
     });
 
