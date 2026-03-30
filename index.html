@@ -53,14 +53,9 @@
             }).addTo(map);
         });
 
-</script>
-
-</body>
-</html>
 // ======================
-// Warna CDK
+// WARNA CDK
 // ======================
-
 function getColor(cdk) {
     return cdk == "CDK I" ? "red" :
            cdk == "CDK II" ? "blue" :
@@ -75,13 +70,12 @@ function getColor(cdk) {
 }
 
 // ======================
-// Titik Pengurus
+// TITIK PENGURUS
 // ======================
-
-fetch('titik_pengurus.geojson')
+fetch('Jaga Leuweung.geojson')
     .then(response => response.json())
     .then(data => {
-        var titikLayer = L.geoJSON(data, {
+        L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 return L.circleMarker(latlng, {
                     radius: 6,
@@ -93,7 +87,14 @@ fetch('titik_pengurus.geojson')
             onEachFeature: function(feature, layer) {
                 layer.bindPopup(
                     "<b>Nama:</b> " + feature.properties.nama +
-                    "<br><b>Jabatan:</b> " + feature.properties.jabatan +
+                    "<br><b>NIK:</b> " + feature.properties.nik +
+                    "<br><b>Usia(Tahun):</b> " + feature.properties.usia +
+                    "<br><b>Alamat:</b> " + feature.properties.alamat +
+                    "<br><b>Desa:</b> " + feature.properties.desa +
+                    "<br><b>Kecamatan:</b> " + feature.properties.kecamatan +
+                    "<br><b>Kabupaten:</b> " + feature.properties.kabupaten +
+                    "<br><b>Penyuluh Kehutanan Pendamping:</b> " + feature.properties.penyuluh +
+                    "<br><b>Keterangan:</b> " + feature.properties.keterangan +
                     "<br><b>CDK:</b> " + feature.properties.cdk
                 );
             }
@@ -101,17 +102,12 @@ fetch('titik_pengurus.geojson')
     });
 
 // ======================
-// Legend CDK
+// LEGENDA
 // ======================
-
 var legend = L.control({position: "bottomright"});
 
 legend.onAdd = function(map) {
-    var div = L.DomUtil.create("div", "info legend");
-    div.style.background = "white";
-    div.style.padding = "10px";
-    div.style.lineHeight = "18px";
-
+    var div = L.DomUtil.create("div", "legend");
     div.innerHTML += "<b>Legenda CDK</b><br>";
     div.innerHTML += "<i style='background:red;width:12px;height:12px;display:inline-block;'></i> CDK I<br>";
     div.innerHTML += "<i style='background:blue;width:12px;height:12px;display:inline-block;'></i> CDK II<br>";
@@ -122,8 +118,12 @@ legend.onAdd = function(map) {
     div.innerHTML += "<i style='background:pink;width:12px;height:12px;display:inline-block;'></i> CDK VII<br>";
     div.innerHTML += "<i style='background:yellow;width:12px;height:12px;display:inline-block;'></i> CDK VIII<br>";
     div.innerHTML += "<i style='background:black;width:12px;height:12px;display:inline-block;'></i> CDK IX<br>";
-
     return div;
 };
 
 legend.addTo(map);
+
+</script>
+
+</body>
+</html>
