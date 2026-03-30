@@ -86,16 +86,16 @@ fetch('Jaga Leuweung.geojson')
             },
             onEachFeature: function(feature, layer) {
                 layer.bindPopup(
-                    "<b>Nama:</b> " + feature.properties.nama +
-                    "<br><b>NIK:</b> " + feature.properties.nik +
-                    "<br><b>Usia(Tahun):</b> " + feature.properties.usia +
-                    "<br><b>Alamat:</b> " + feature.properties.alamat +
-                    "<br><b>Desa:</b> " + feature.properties.desa +
-                    "<br><b>Kecamatan:</b> " + feature.properties.kecamatan +
-                    "<br><b>Kabupaten:</b> " + feature.properties.kabupaten +
-                    "<br><b>Penyuluh Kehutanan Pendamping:</b> " + feature.properties.penyuluh +
-                    "<br><b>Keterangan:</b> " + feature.properties.keterangan +
-                    "<br><b>CDK:</b> " + feature.properties.cdk
+                    "<b>Nama:</b> " + feature.properties.Nama +
+                    "<br><b>NIK:</b> " + feature.properties.NIK +
+                    "<br><b>Usia(Tahun):</b> " + feature.properties.Usia(Tahun) +
+                    "<br><b>Alamat:</b> " + feature.properties.Alamat +
+                    "<br><b>Desa:</b> " + feature.properties.Desa +
+                    "<br><b>Kecamatan:</b> " + feature.properties.Kecamatan +
+                    "<br><b>Kabupaten:</b> " + feature.properties.Kabupaten +
+                    "<br><b>Penyuluh Kehutanan Pendamping:</b> " + feature.properties.PenyuluhKehutananPendamping +
+                    "<br><b>Keterangan:</b> " + feature.properties.Keterangan +
+                    "<br><b>CDK:</b> " + feature.properties.CDK
                 );
             }
         }).addTo(map);
