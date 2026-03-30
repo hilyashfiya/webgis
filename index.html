@@ -80,8 +80,8 @@ fetch('pengurus jaga leuweung.geojson')
             pointToLayer: function(feature, latlng) {
 
                 // Ambil koordinat dari atribut Excel (koordinat desa)
-                var lat = feature.properties.latitude;
-                var lng = feature.properties.longitude;
+                var lat = feature.properties.field_10;
+                var lng = feature.properties.koordinat desa;
 
                 return L.circleMarker([lat, lng], {
                     radius: 6,
