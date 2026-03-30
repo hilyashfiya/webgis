@@ -61,7 +61,18 @@
 
     L.control.layers(baseMaps).addTo(map);
 
-</script>
+// ======================
+// Batas Administrasi Jawa Barat
+// ======================
 
-</body>
-</html>
+fetch('Jawa_Barat.geojson')
+    .then(response => response.json())
+    .then(data => {
+        var batasJabar = L.geoJSON(data, {
+            style: {
+                color: "red",
+                weight: 2,
+                fillOpacity: 0
+            }
+        }).addTo(map);
+    });
