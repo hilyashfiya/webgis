@@ -2,57 +2,36 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>WebGIS Jaga Leuweung</title>
+    <title>WebGIS Jawa Barat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        h2 { text-align: center; margin: 10px; }
-        #map { height: 92vh; width: 100%; }
+        body { margin: 0; }
+        #map { height: 100vh; }
     </style>
 </head>
 <body>
 
-<h2>Peta Pengurus Jaga Leuweung</h2>
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // ======================
-    // BASEMAP
-    // ======================
+    // Basemap
+    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+    var medan = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
 
-    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-    });
-
-    var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
-    });
-
-    var medan = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data: OpenTopoMap'
-    });
-
-    // ======================
-    // MAP
-    // ======================
-
+    // Map
     var map = L.map('map', {
         center: [-6.9, 107.6],
         zoom: 8,
         layers: [osm]
     });
 
-    // ======================
-    // CONTROL LAYER
-    // ======================
-
+    // Layer control
     var baseMaps = {
         "OpenStreetMap": osm,
         "Satelit": satelit,
@@ -61,18 +40,20 @@
 
     L.control.layers(baseMaps).addTo(map);
 
-// ======================
-// Batas Administrasi Jawa Barat
-// ======================
+    // GeoJSON Jawa Barat
+    fetch('Jawa Barat.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: {
+                    color: "red",
+                    weight: 2,
+                    fillOpacity: 0
+                }
+            }).addTo(map);
+        });
 
-fetch('Jawa_Barat.geojson')
-    .then(response => response.json())
-    .then(data => {
-        var batasJabar = L.geoJSON(data, {
-            style: {
-                color: "red",
-                weight: 2,
-                fillOpacity: 0
-            }
-        }).addTo(map);
-    });
+</script>
+
+</body>
+</html>
