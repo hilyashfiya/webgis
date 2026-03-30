@@ -18,7 +18,7 @@
             margin: 10px;
         }
         #map {
-            height: 90vh;
+            height: 92vh;
             width: 100%;
         }
     </style>
@@ -32,29 +32,36 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Basemap OSM
+    // ======================
+    // BASEMAP
+    // ======================
+
     var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap'
     });
 
-    // Basemap Satelit (ESRI)
     var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri'
     });
 
-    // Basemap Medan / Topografi
     var medan = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
         attribution: 'Map data: OpenTopoMap'
     });
 
-    // Membuat peta
+    // ======================
+    // MAP
+    // ======================
+
     var map = L.map('map', {
-        center: [-6.723, 106.973],
-        zoom: 10,
-        layers: [osm] // default layer
+        center: [-6.9, 107.6], // Jawa Barat
+        zoom: 8,
+        layers: [osm]
     });
 
-    // Layer control (pilihan peta)
+    // ======================
+    // LAYER CONTROL
+    // ======================
+
     var baseMaps = {
         "OpenStreetMap": osm,
         "Satelit": satelit,
@@ -63,10 +70,6 @@
 
     L.control.layers(baseMaps).addTo(map);
 
-    // Contoh marker
-    L.marker([-6.723, 106.973])
-        .addTo(map)
-        .bindPopup("Contoh Lokasi Jaga Leuweung");
 </script>
 
 </body>
