@@ -1,92 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
-<title>Pengurus Jaga Leuweung</title> 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <title>Pengurus Jaga Leuweung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<style>
-body { margin: 0; font-family: Arial, sans-serif; }
-h2 { text-align: center; margin: 10px; }
-#map { height: 92vh; width: 100%; }
+    <!-- Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-.legend {
-    background: white;
-    padding: 10px;
-    line-height: 18px;
-    border-radius: 5px;
-}
+    <style>
+        body { margin:0; font-family: Arial; }
 
-.panel{
-    position:absolute;
-    top:70px;
-    left:10px;
-    z-index:1000;
-    background:white;
-    padding:10px;
-    border-radius:8px;
-    font-size:12px;
-    width:210px;
-}
+        #panel {
+            padding: 10px;
+            background: #f0f0f0;
+        }
 
-.chartBox{
-    position:absolute;
-    bottom:10px;
-    left:10px;
-    width:260px;
-    height:180px;
-    background:white;
-    padding:10px;
-    border-radius:10px;
-}
-</style>
+        #map {
+            height: 65vh;
+        }
+
+        #chartContainer {
+            height: 250px;
+            background: white;
+            padding: 10px;
+        }
+
+        .leaflet-popup-content {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
-
 <body>
 
-<h2>Peta Pengurus Jaga Leuweung</h2>
+<div id="panel">
+    <b>Pengurus Jaga Leuweung</b><br><br>
 
-<div class="panel">
-<b>🔍 Search Nama</b>
-<input type="text" id="search" style="width:100%; margin:5px 0;">
+    Cari Nama:
+    <input type="text" id="search">
 
-<b>📊 Filter CDK</b>
-<div id="filterCDK"></div>
+    <br><br>
 
-<hr>
-<b>🗺️ Layer</b><br>
-<label><input type="checkbox" id="batasCheck" checked> Batas Administrasi</label><br>
-<label><input type="checkbox" id="cdkCheck" checked> Titik PJL</label>
+    <input type="checkbox" id="batasCheck" checked> Batas Administrasi
+    <input type="checkbox" id="cdkCheck" checked> Titik PJL
 </div>
 
 <div id="map"></div>
 
-<div class="chartBox">
-<canvas id="chart"></canvas>
+<div id="chartContainer">
+    <canvas id="chart"></canvas>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
+// ================= PETA =================
+var map = L.map('map').setView([-6.9, 107.6], 9);
 
 // ================= BASEMAP =================
-var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
-var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-var medan = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
 
-var map = L.map('map', {
-    center: [-6.9,107.6],
-    zoom: 8,
-    layers: [osm]
-});
+osm.addTo(map);
 
 var baseMaps = {
     "OSM": osm,
-    "Satelit": satelit,
-    "Medan": medan
+    "Satelit": esri,
+    "Medan": topo
 };
 
 L.control.layers(baseMaps).addTo(map);
@@ -99,26 +83,22 @@ function getColor(cdk){
            cdk == "CDK IV" ? "orange" :
            cdk == "CDK V" ? "purple" :
            cdk == "CDK VI" ? "brown" :
-           cdk == "CDK VII" ? "pink" :
-           cdk == "CDK VIII" ? "yellow" :
-           cdk == "CDK IX" ? "black" : "gray";
+           cdk == "CDK VII" ? "black" :
+           cdk == "CDK VIII" ? "pink" :
+           cdk == "CDK IX" ? "yellow" :
+           "gray";
 }
 
-// ================= GLOBAL =================
-var allFeatures = [];
-var activeCDK = new Set();
-var geoLayer;
-var batasLayer;
+// ================= CHART =================
 var chart;
-
-// ================= INIT CHART (AWAL) =================
 var ctx = document.getElementById("chart").getContext("2d");
+
 chart = new Chart(ctx,{
     type:'bar',
     data:{
         labels: [],
         datasets:[{
-            label:'Jumlah PJL',
+            label:'Jumlah PJL per CDK',
             data: []
         }]
     },
@@ -129,46 +109,30 @@ chart = new Chart(ctx,{
     }
 });
 
-// ================= BATAS =================
-fetch('Jawa Barat.geojson')
-.then(res=>res.json())
-.then(data=>{
+// ================= LAYER =================
+var geoLayer;
+var batasLayer;
+var allFeatures;
+
+// ================= LOAD BATAS ADMIN =================
+fetch("Jawa Barat.geojson")
+.then(res => res.json())
+.then(data => {
     batasLayer = L.geoJSON(data,{
-        style:{color:"black",weight:0.5,fillOpacity:0}
+        style:{
+            color:"black",
+            weight:0.5,
+            fillOpacity:0
+        }
     }).addTo(map);
 });
 
-// ================= DATA PJL =================
-fetch('PJL.geojson')
-.then(res=>res.json())
-.then(data=>{
-
+// ================= LOAD DATA PJL =================
+fetch("PJL.geojson")
+.then(res => res.json())
+.then(data => {
     allFeatures = data.features;
-
-    let cdkSet = new Set(allFeatures.map(f=>f.properties.cdk));
-    let filterDiv = document.getElementById("filterCDK");
-
-    cdkSet.forEach(cdk=>{
-        activeCDK.add(cdk);
-        filterDiv.innerHTML += `
-        <label><input type="checkbox" checked value="${cdk}"> ${cdk}</label><br>`;
-    });
-
     updateMap();
-
-    filterDiv.addEventListener("change",()=>{
-        activeCDK.clear();
-        document.querySelectorAll("#filterCDK input:checked")
-        .forEach(i=>activeCDK.add(i.value));
-        updateMap();
-    });
-
-    // SEARCH DELAY
-    let timer;
-    document.getElementById("search").addEventListener("input", function(){
-        clearTimeout(timer);
-        timer = setTimeout(updateMap, 300);
-    });
 });
 
 // ================= UPDATE MAP =================
@@ -180,7 +144,6 @@ function updateMap(){
 
     let keyword = document.getElementById("search").value.toLowerCase();
     let countCDK = {};
-    let hasData = false;
 
     geoLayer = L.geoJSON(allFeatures,{
 
@@ -193,22 +156,18 @@ function updateMap(){
 
             return L.circleMarker([lat,lng],{
                 radius: 1,
-                color:getColor(feature.properties.cdk),
-                fillColor:getColor(feature.properties.cdk),
-                fillOpacity:1
+                color: getColor(feature.properties.cdk),
+                fillColor: getColor(feature.properties.cdk),
+                fillOpacity: 1
             });
         },
 
         filter: function(feature){
             let p = feature.properties;
-            let lolos = activeCDK.has(p.cdk) &&
-                        (p.nama || "").toLowerCase().includes(keyword);
-
-            if(lolos) hasData = true;
-            return lolos;
+            return (p.nama || "").toLowerCase().includes(keyword);
         },
 
-        onEachFeature: function(feature,layer){
+        onEachFeature: function(feature, layer){
 
             let p = feature.properties;
 
@@ -216,38 +175,46 @@ function updateMap(){
                 countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
             }
 
-            // POPUP LENGKAP
             layer.bindPopup(`
+                <div style="font-size:13px">
+                <b>DATA PENGURUS JAGA LEUWEUNG</b><hr>
+
                 <b>Nama:</b> ${p.nama || "-"}<br>
                 <b>NIK:</b> ${p.nik || "-"}<br>
-                <b>Usia:</b> ${p["usia(tahun)"] || "-"} tahun<br>
+                <b>Usia:</b> ${p["usia(tahun)"] || "-"} Tahun<br>
                 <b>Alamat:</b> ${p.alamat || "-"}<br>
                 <b>Desa:</b> ${p.desa || "-"}<br>
                 <b>Kecamatan:</b> ${p.kecamatan || "-"}<br>
-                <b>Kabupaten:</b> ${p.kabupaten || "-"}<br><br>
+                <b>Kabupaten:</b> ${p.kabupaten || "-"}<br>
+                <hr>
                 <b>Koordinat Desa:</b><br>
-                (${p["koordinat desa (lat)"]}, ${p["koordinat desa (long)"]})<br><br>
+                Lat: ${p["koordinat desa (lat)"] || "-"}<br>
+                Long: ${p["koordinat desa (long)"] || "-"}<br>
+                <hr>
                 <b>Koordinat Calon Lokasi Persemaian:</b><br>
-                (${p["koordinat calon lokasi persemaian (x)"]}, ${p["koordinat calon lokasi persemaian (y)"]})<br><br>
+                X: ${p["koordinat calon lokasi persemaian (x)"] || "-"}<br>
+                Y: ${p["koordinat calon lokasi persemaian (y)"] || "-"}<br>
+                <hr>
                 <b>Koordinat Calon Lokasi Penanaman:</b><br>
-                (${p["koordinat calon lokasi penanaman (x)"]}, ${p["koordinat calon lokasi penanaman (y)"]})<br><br>
+                X: ${p["koordinat calon lokasi penanaman (x)"] || "-"}<br>
+                Y: ${p["koordinat calon lokasi penanaman (y)"] || "-"}<br>
+                <hr>
+                <b>CDK:</b> ${p.cdk || "-"}<br>
                 <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
                 <b>Keterangan:</b> ${p.keterangan || "-"}<br>
-                <b>CDK:</b> ${p.cdk || "-"}
+                </div>
             `);
         }
-
     });
 
     if(document.getElementById("cdkCheck").checked){
         geoLayer.addTo(map);
     }
 
-    // UPDATE CHART
     updateChart(countCDK);
 }
 
-// ================= UPDATE CHART TANPA HILANG =================
+// ================= UPDATE CHART =================
 function updateChart(data){
 
     if(!data || Object.keys(data).length === 0){
@@ -262,7 +229,15 @@ function updateChart(data){
     chart.update();
 }
 
-// ================= CHECKBOX LAYER =================
+// ================= CHECKBOX =================
+document.getElementById("cdkCheck").addEventListener("change", function(){
+    if(this.checked){
+        map.addLayer(geoLayer);
+    } else {
+        map.removeLayer(geoLayer);
+    }
+});
+
 document.getElementById("batasCheck").addEventListener("change", function(){
     if(this.checked){
         map.addLayer(batasLayer);
@@ -271,24 +246,8 @@ document.getElementById("batasCheck").addEventListener("change", function(){
     }
 });
 
-document.getElementById("cdkCheck").addEventListener("change", function(){
-    updateMap();
-});
-
-// ================= LEGENDA =================
-var legend = L.control({position:"bottomright"});
-
-legend.onAdd = function(){
-    var div = L.DomUtil.create("div","legend");
-    div.innerHTML += "<b>Legenda CDK</b><br>";
-    ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"]
-    .forEach(cdk=>{
-        div.innerHTML += `<i style="background:${getColor(cdk)};width:12px;height:12px;display:inline-block;"></i> ${cdk}<br>`;
-    });
-    return div;
-};
-
-legend.addTo(map);
+// ================= SEARCH =================
+document.getElementById("search").addEventListener("input", updateMap);
 
 </script>
 
