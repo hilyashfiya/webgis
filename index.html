@@ -111,6 +111,24 @@ var geoLayer;
 var batasLayer;
 var chart;
 
+// ================= INIT CHART (AWAL) =================
+var ctx = document.getElementById("chart").getContext("2d");
+chart = new Chart(ctx,{
+    type:'bar',
+    data:{
+        labels: [],
+        datasets:[{
+            label:'Jumlah PJL',
+            data: []
+        }]
+    },
+    options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false
+    }
+});
+
 // ================= BATAS =================
 fetch('Jawa Barat.geojson')
 .then(res=>res.json())
@@ -145,7 +163,7 @@ fetch('PJL.geojson')
         updateMap();
     });
 
-    // SEARCH DENGAN DELAY (SUPAYA GRAFIK TIDAK KEDIP)
+    // SEARCH DELAY
     let timer;
     document.getElementById("search").addEventListener("input", function(){
         clearTimeout(timer);
@@ -225,39 +243,23 @@ function updateMap(){
         geoLayer.addTo(map);
     }
 
-    if(hasData){
-        updateChart(countCDK);
-    }
+    // UPDATE CHART
+    updateChart(countCDK);
 }
 
-// ================= GRAFIK =================
+// ================= UPDATE CHART TANPA HILANG =================
 function updateChart(data){
 
     if(!data || Object.keys(data).length === 0){
+        chart.data.labels = ["Tidak ada data"];
+        chart.data.datasets[0].data = [0];
+        chart.update();
         return;
     }
 
-    if(chart){
-        chart.destroy();
-    }
-
-    var ctx = document.getElementById("chart").getContext("2d");
-
-    chart = new Chart(ctx,{
-        type:'bar',
-        data:{
-            labels:Object.keys(data),
-            datasets:[{
-                label:'Jumlah PJL',
-                data:Object.values(data)
-            }]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            animation:false
-        }
-    });
+    chart.data.labels = Object.keys(data);
+    chart.data.datasets[0].data = Object.values(data);
+    chart.update();
 }
 
 // ================= CHECKBOX LAYER =================
