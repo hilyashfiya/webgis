@@ -29,15 +29,15 @@ h2 { text-align: center; margin: 10px; }
     padding:10px;
     border-radius:8px;
     font-size:12px;
-    width:180px;
+    width:200px;
 }
 
 .chartBox{
     position:absolute;
     bottom:10px;
     left:10px;
-    width:250px;
-    height:150px;
+    width:260px;
+    height:180px;
     background:white;
     padding:10px;
     border-radius:10px;
@@ -50,7 +50,7 @@ h2 { text-align: center; margin: 10px; }
 <h2>Peta Pengurus Jaga Leuweung</h2>
 
 <div class="panel">
-<b>🔍 Search</b>
+<b>🔍 Search Nama</b>
 <input type="text" id="search" style="width:100%; margin:5px 0;">
 
 <b>📊 Filter CDK</b>
@@ -69,10 +69,9 @@ h2 { text-align: center; margin: 10px; }
 
 // ================= MAP =================
 var map = L.map('map').setView([-6.9,107.6],8);
-
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// ================= WARNA =================
+// ================= WARNA CDK =================
 function getColor(cdk){
     return cdk == "CDK I" ? "red" :
            cdk == "CDK II" ? "blue" :
@@ -91,7 +90,7 @@ var activeCDK = new Set();
 var geoLayer;
 var chart;
 
-// ================= BATAS =================
+// ================= BATAS JAWA BARAT =================
 fetch('Jawa Barat.geojson')
 .then(res=>res.json())
 .then(data=>{
@@ -100,7 +99,7 @@ fetch('Jawa Barat.geojson')
     }).addTo(map);
 });
 
-// ================= DATA =================
+// ================= DATA PJL =================
 fetch('PJL.geojson')
 .then(res=>res.json())
 .then(data=>{
@@ -129,7 +128,7 @@ fetch('PJL.geojson')
     .addEventListener("input", updateMap);
 });
 
-// ================= UPDATE =================
+// ================= UPDATE MAP =================
 function updateMap(){
 
     if(geoLayer){
@@ -166,6 +165,11 @@ function updateMap(){
 
             let p = feature.properties;
 
+            if(p.cdk){
+                countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
+            }
+
+            // POPUP LENGKAP
             layer.bindPopup(`
                 <b>Nama:</b> ${p.nama || "-"}<br>
                 <b>NIK:</b> ${p.nik || "-"}<br>
@@ -184,8 +188,6 @@ function updateMap(){
                 <b>Keterangan:</b> ${p.keterangan || "-"}<br>
                 <b>CDK:</b> ${p.cdk || "-"}
             `);
-
-            countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
         }
 
     }).addTo(map);
@@ -193,12 +195,16 @@ function updateMap(){
     updateChart(countCDK);
 }
 
-// ================= CHART =================
+// ================= GRAFIK =================
 function updateChart(data){
 
-    if(chart) chart.destroy();
+    if(chart){
+        chart.destroy();
+    }
 
-    chart = new Chart(document.getElementById("chart"),{
+    var ctx = document.getElementById("chart").getContext("2d");
+
+    chart = new Chart(ctx,{
         type:'bar',
         data:{
             labels:Object.keys(data),
@@ -206,6 +212,10 @@ function updateChart(data){
                 label:'Jumlah PJL',
                 data:Object.values(data)
             }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false
         }
     });
 }
@@ -215,7 +225,7 @@ var legend = L.control({position:"bottomright"});
 
 legend.onAdd = function(){
     var div = L.DomUtil.create("div","legend");
-    div.innerHTML += "<b>Legenda</b><br>";
+    div.innerHTML += "<b>Legenda CDK</b><br>";
     ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"]
     .forEach(cdk=>{
         div.innerHTML += `<i style="background:${getColor(cdk)};width:12px;height:12px;display:inline-block;"></i> ${cdk}<br>`;
