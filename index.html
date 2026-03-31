@@ -55,6 +55,12 @@ h2 { text-align: center; margin: 10px; }
 
 <b>📊 Filter CDK</b>
 <div id="filterCDK"></div>
+
+<hr>
+
+<b>🗺️ Layer</b><br>
+<label><input type="checkbox" id="batasCheck" checked> Batas Administrasi</label><br>
+<label><input type="checkbox" id="cdkCheck" checked> Titik PJL</label>
 </div>
 
 <div id="map"></div>
@@ -67,9 +73,24 @@ h2 { text-align: center; margin: 10px; }
 
 <script>
 
-// ================= MAP =================
-var map = L.map('map').setView([-6.9,107.6],8);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+// ================= BASEMAP =================
+var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+var medan = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+
+var map = L.map('map', {
+    center: [-6.9,107.6],
+    zoom: 8,
+    layers: [osm]
+});
+
+var baseMaps = {
+    "OSM": osm,
+    "Satelit": satelit,
+    "Medan": medan
+};
+
+L.control.layers(baseMaps).addTo(map);
 
 // ================= WARNA CDK =================
 function getColor(cdk){
@@ -88,13 +109,15 @@ function getColor(cdk){
 var allFeatures = [];
 var activeCDK = new Set();
 var geoLayer;
+var batasLayer;
 var chart;
+var lastChartData = {};
 
-// ================= BATAS JAWA BARAT =================
+// ================= BATAS =================
 fetch('Jawa Barat.geojson')
 .then(res=>res.json())
 .then(data=>{
-    L.geoJSON(data,{
+    batasLayer = L.geoJSON(data,{
         style:{color:"black",weight:0.5,fillOpacity:0}
     }).addTo(map);
 });
@@ -148,7 +171,7 @@ function updateMap(){
             if(isNaN(lat) || isNaN(lng)) return null;
 
             return L.circleMarker([lat,lng],{
-                radius: 1,
+                radius: 4,
                 color:getColor(feature.properties.cdk),
                 fillColor:getColor(feature.properties.cdk),
                 fillOpacity:1
@@ -169,7 +192,6 @@ function updateMap(){
                 countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
             }
 
-            // POPUP LENGKAP
             layer.bindPopup(`
                 <b>Nama:</b> ${p.nama || "-"}<br>
                 <b>NIK:</b> ${p.nik || "-"}<br>
@@ -190,9 +212,18 @@ function updateMap(){
             `);
         }
 
-    }).addTo(map);
+    });
 
-    updateChart(countCDK);
+    if(document.getElementById("cdkCheck").checked){
+        geoLayer.addTo(map);
+    }
+
+    // SIMPAN DATA CHART
+    if(Object.keys(countCDK).length > 0){
+        lastChartData = countCDK;
+    }
+
+    updateChart(lastChartData);
 }
 
 // ================= GRAFIK =================
@@ -219,6 +250,19 @@ function updateChart(data){
         }
     });
 }
+
+// ================= CHECKBOX LAYER =================
+document.getElementById("batasCheck").addEventListener("change", function(){
+    if(this.checked){
+        map.addLayer(batasLayer);
+    } else {
+        map.removeLayer(batasLayer);
+    }
+});
+
+document.getElementById("cdkCheck").addEventListener("change", function(){
+    updateMap();
+});
 
 // ================= LEGENDA =================
 var legend = L.control({position:"bottomright"});
