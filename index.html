@@ -29,7 +29,7 @@ h2 { text-align: center; margin: 10px; }
     padding:10px;
     border-radius:8px;
     font-size:12px;
-    width:200px;
+    width:210px;
 }
 
 .chartBox{
@@ -57,7 +57,6 @@ h2 { text-align: center; margin: 10px; }
 <div id="filterCDK"></div>
 
 <hr>
-
 <b>🗺️ Layer</b><br>
 <label><input type="checkbox" id="batasCheck" checked> Batas Administrasi</label><br>
 <label><input type="checkbox" id="cdkCheck" checked> Titik PJL</label>
@@ -111,7 +110,6 @@ var activeCDK = new Set();
 var geoLayer;
 var batasLayer;
 var chart;
-var lastChartData = {};
 
 // ================= BATAS =================
 fetch('Jawa Barat.geojson')
@@ -147,8 +145,12 @@ fetch('PJL.geojson')
         updateMap();
     });
 
-    document.getElementById("search")
-    .addEventListener("input", updateMap);
+    // SEARCH DENGAN DELAY (SUPAYA GRAFIK TIDAK KEDIP)
+    let timer;
+    document.getElementById("search").addEventListener("input", function(){
+        clearTimeout(timer);
+        timer = setTimeout(updateMap, 300);
+    });
 });
 
 // ================= UPDATE MAP =================
@@ -160,6 +162,7 @@ function updateMap(){
 
     let keyword = document.getElementById("search").value.toLowerCase();
     let countCDK = {};
+    let hasData = false;
 
     geoLayer = L.geoJSON(allFeatures,{
 
@@ -171,7 +174,7 @@ function updateMap(){
             if(isNaN(lat) || isNaN(lng)) return null;
 
             return L.circleMarker([lat,lng],{
-                radius: 4,
+                radius: 1,
                 color:getColor(feature.properties.cdk),
                 fillColor:getColor(feature.properties.cdk),
                 fillOpacity:1
@@ -180,8 +183,11 @@ function updateMap(){
 
         filter: function(feature){
             let p = feature.properties;
-            return activeCDK.has(p.cdk) &&
-                   (p.nama || "").toLowerCase().includes(keyword);
+            let lolos = activeCDK.has(p.cdk) &&
+                        (p.nama || "").toLowerCase().includes(keyword);
+
+            if(lolos) hasData = true;
+            return lolos;
         },
 
         onEachFeature: function(feature,layer){
@@ -192,6 +198,7 @@ function updateMap(){
                 countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
             }
 
+            // POPUP LENGKAP
             layer.bindPopup(`
                 <b>Nama:</b> ${p.nama || "-"}<br>
                 <b>NIK:</b> ${p.nik || "-"}<br>
@@ -218,16 +225,17 @@ function updateMap(){
         geoLayer.addTo(map);
     }
 
-    // SIMPAN DATA CHART
-    if(Object.keys(countCDK).length > 0){
-        lastChartData = countCDK;
+    if(hasData){
+        updateChart(countCDK);
     }
-
-    updateChart(lastChartData);
 }
 
 // ================= GRAFIK =================
 function updateChart(data){
+
+    if(!data || Object.keys(data).length === 0){
+        return;
+    }
 
     if(chart){
         chart.destroy();
@@ -246,7 +254,8 @@ function updateChart(data){
         },
         options:{
             responsive:true,
-            maintainAspectRatio:false
+            maintainAspectRatio:false,
+            animation:false
         }
     });
 }
