@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Peta PJL Profesional</title>
+<title>Peta PJL Pengurus Jaga Leuweung</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -17,68 +17,55 @@ body {
 
 h2{
     text-align:center;
-    margin:10px;
+    margin:8px;
+    font-size:18px;
 }
 
 #map {
-    height:65vh;
+    height:70vh;
+    margin:8px;
     border-radius:10px;
-    margin:10px;
 }
 
 .panel{
     position:absolute;
-    top:80px;
-    left:20px;
+    top:70px;
+    left:15px;
     z-index:1000;
     background:white;
-    padding:12px;
-    border-radius:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    font-size:12px;
-    width:200px;
+    padding:8px;
+    border-radius:8px;
+    font-size:11px;
+    width:160px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
 }
 
 .panel input{
     width:100%;
-    padding:5px;
-    margin-top:5px;
-    margin-bottom:10px;
-    border-radius:5px;
-    border:1px solid #ccc;
+    padding:4px;
+    margin:5px 0;
 }
 
 #chartContainer{
-    height:30vh;
-    margin:10px;
+    height:22vh;
+    margin:8px;
     background:white;
     border-radius:10px;
-    padding:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-
-/* popup */
-.leaflet-popup-content {
-    font-size: 12px;
-    line-height: 1.5;
-}
-.leaflet-popup-content hr {
-    margin: 6px 0;
+    padding:8px;
 }
 
 /* legenda */
 .legend {
     background:white;
-    padding:10px;
-    border-radius:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.3);
-    font-size:12px;
+    padding:8px;
+    border-radius:6px;
+    font-size:11px;
 }
 .legend i {
-    width:12px;
-    height:12px;
+    width:10px;
+    height:10px;
     float:left;
-    margin-right:6px;
+    margin-right:5px;
 }
 </style>
 </head>
@@ -88,7 +75,7 @@ h2{
 <h2>🌳 Peta Pengurus Jaga Leuweung</h2>
 
 <div class="panel">
-<b>🔍 Search</b>
+<b>Search</b>
 <input type="text" id="search" placeholder="Nama...">
 
 <b>Filter CDK</b>
@@ -184,44 +171,40 @@ function updateMap(){
         let lat = parseFloat(p["koordinat desa (lat)"]);
         let lng = parseFloat(p["koordinat desa (long)"]);
 
-        if(isNaN(lat) || isNaN(lng)) return;
+        // DEBUG kalau error
+        if(isNaN(lat) || isNaN(lng)){
+            console.log("Koordinat error:", p.nama, lat, lng);
+            return;
+        }
 
         let warna = getColor(p.cdk);
 
         let marker = L.circleMarker([lat,lng],{
-            radius:1,
+            radius:1.5, // 🔥 FIX: biar kelihatan
             color:"#fff",
             weight:1,
             fillColor:warna,
             fillOpacity:0.9
         });
 
-        // ================= POPUP SUPER LENGKAP =================
         marker.bindPopup(`
-            <b>📌 DATA PENGURUS JAGA LEUWEUNG</b><hr>
-
-            <b>👤 Identitas</b><br>
-            Nama: ${p.nama || "-"}<br>
+            <b>${p.nama || "-"}</b><hr>
             NIK: ${p.nik || "-"}<br>
-            Usia: ${p["usia(tahun)"] || "-"} tahun<br><br>
-            <b>📍 Alamat Lengkap</b><br>
-            ${p.alamat || "-"}<br>
+            Usia: ${p["usia(tahun)"] || "-"}<br>
             Desa: ${p.desa || "-"}<br>
             Kecamatan: ${p.kecamatan || "-"}<br>
             Kabupaten: ${p.kabupaten || "-"}<br><br>
-            <b>🧭 Koordinat Desa</b><br>
+            <b>Koordinat Desa:</b><br>
             (${lat}, ${lng})<br><br>
-            <b>🌱 Koordinat Calon Lokasi Persemaian</b><br>
-            (${p["koordinat calon lokasi persemaian (x)"] || "-"}, 
+            <b>Koordinat Calon Lokasi Persemaian:</b><br>
+            (${p["koordinat calon lokasi persemaian (x)"] || "-"},
              ${p["koordinat calon lokasi persemaian (y)"] || "-"})<br><br>
-            <b>🌳 Koordinat Calon Lokasi Penanaman</b><br>
-            (${p["koordinat calon lokasi penanaman (x)"] || "-"}, 
+            <b>Koordinat Calon Lokasi Penanaman:</b><br>
+            (${p["koordinat calon lokasi penanaman (x)"] || "-"},
              ${p["koordinat calon lokasi penanaman (y)"] || "-"})<br><br>
-            <b>👨‍🌾 Penyuluh Kehutanan Pendamping</b><br>
-            ${p["penyuluh kehutanan pendamping"] || "-"}<br><br>
-            <b>📝 Keterangan</b><br>
-            ${p.keterangan || "-"}<br><br>
-            <b>🏷️ CDK:</b> ${p.cdk || "-"}
+             ${p["penyuluh kehutanan pendamping"] || "-"}<br><br> <b>
+             Keterangan</b><br> ${p.keterangan || "-"}<br><br>
+            CDK: ${p.cdk || "-"}
         `);
 
         markersLayer.addLayer(marker);
@@ -252,6 +235,10 @@ function updateChart(data){
                 data: values,
                 backgroundColor: colors
             }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false
         }
     });
 }
@@ -264,7 +251,7 @@ legend.onAdd = function(){
 
     var cdks = ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"];
 
-    div.innerHTML += "<b>Legenda CDK</b><br>";
+    div.innerHTML += "<b>Legenda</b><br>";
 
     cdks.forEach(cdk=>{
         div.innerHTML += '<i style="background:'+getColor(cdk)+'"></i> '+cdk+'<br>';
