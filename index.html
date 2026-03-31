@@ -74,7 +74,7 @@ var batasLayer;
 var allData=[];
 var activeCDK=new Set();
 
-// ================= BATAS =================
+// ================= BATAS ADMIN =================
 fetch('Jawa Barat.geojson')
 .then(res=>res.json())
 .then(data=>{
@@ -88,12 +88,14 @@ fetch('Jawa Barat.geojson')
     ).addTo(map);
 });
 
-// ================= DATA =================
+// ================= DATA PJL =================
 fetch('PJL.geojson')
 .then(res=>res.json())
 .then(data=>{
+
     allData = data.features;
 
+    // ambil daftar CDK
     let cdkSet = new Set(allData.map(f=>f.properties.cdk));
     let filterDiv = document.getElementById("filter");
 
@@ -105,6 +107,7 @@ fetch('PJL.geojson')
 
     updateMap();
 
+    // filter CDK
     filterDiv.addEventListener("change",()=>{
         activeCDK.clear();
         document.querySelectorAll("#filter input:checked")
@@ -112,29 +115,33 @@ fetch('PJL.geojson')
         updateMap();
     });
 
+    // search nama
     document.getElementById("search").addEventListener("input",updateMap);
 });
 
-// ================= UPDATE =================
+// ================= UPDATE MAP =================
 function updateMap(){
+
     markers.clearLayers();
 
     let keyword = document.getElementById("search").value.toLowerCase();
 
     allData.forEach(f=>{
+
         let p = f.properties;
 
-        let nama = (p.nama || "").toLowerCase();
-
+        // filter
         if(!activeCDK.has(p.cdk)) return;
-        if(!nama.includes(keyword)) return;
+        if(!(p.nama || "").toLowerCase().includes(keyword)) return;
 
-        // 🔥 FIX UTAMA: KONVERSI ANGKA
+        // 🔥 AMBIL KOORDINAT DARI PROPERTIES (INI KUNCI FIX)
         let lat = parseFloat(p["koordinat desa (lat)"]);
         let lng = parseFloat(p["koordinat desa (long)"]);
 
+        // kalau kosong skip
         if(isNaN(lat) || isNaN(lng)) return;
 
+        // 🔥 PASTI BULAT (circle marker)
         let marker = L.circleMarker([lat,lng],{
             radius:1,
             color:"#fff",
@@ -143,6 +150,7 @@ function updateMap(){
             fillOpacity:0.9
         });
 
+        // 🔥 POPUP FIX
         marker.bindPopup(`
             <b>Nama:</b> ${p.nama || "-"}<br>
             <b>NIK:</b> ${p.nik || "-"}<br>
@@ -153,11 +161,11 @@ function updateMap(){
             <b>Kabupaten:</b> ${p.kabupaten || "-"}<br><br>
             <b>Koordinat Desa:</b><br>
             (${lat}, ${lng})<br><br>
-            <b>Koordinat Persemaian:</b><br>
+            <b>Koordinat Calon Lokasi Persemaian:</b><br>
             (${p["koordinat calon lokasi persemaian (x)"] || "-"}, ${p["koordinat calon lokasi persemaian (y)"] || "-"})<br><br>
-            <b>Koordinat Penanaman:</b><br>
+            <b>Koordinat Calon Lokasi Penanaman:</b><br>
             (${p["koordinat calon lokasi penanaman (x)"] || "-"}, ${p["koordinat calon lokasi penanaman (y)"] || "-"})<br><br>
-            <b>Penyuluh:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
+            <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
             <b>Keterangan:</b> ${p.keterangan || "-"}<br>
             <b>CDK:</b> ${p.cdk || "-"}
         `);
