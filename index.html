@@ -18,16 +18,25 @@
         #panel {
             padding: 10px;
             background: #f0f0f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
         #map {
-            height: 65vh;
+            height: 60vh;
+            width: 100%;
         }
 
         #chartContainer {
-            height: 250px;
-            background: white;
+            width: 100%;
+            height: 280px;
             padding: 10px;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        #chart {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .leaflet-popup-content {
@@ -46,8 +55,21 @@
 
     <br><br>
 
+    <b>Layer:</b><br>
     <input type="checkbox" id="batasCheck" checked> Batas Administrasi
-    <input type="checkbox" id="cdkCheck" checked> Titik PJL
+    <input type="checkbox" id="pjlCheck" checked> Titik PJL
+
+    <br><br>
+    <b>Filter CDK:</b><br>
+    <input type="checkbox" class="cdkFilter" value="CDK I" checked> CDK I
+    <input type="checkbox" class="cdkFilter" value="CDK II" checked> CDK II
+    <input type="checkbox" class="cdkFilter" value="CDK III" checked> CDK III
+    <input type="checkbox" class="cdkFilter" value="CDK IV" checked> CDK IV
+    <input type="checkbox" class="cdkFilter" value="CDK V" checked> CDK V
+    <input type="checkbox" class="cdkFilter" value="CDK VI" checked> CDK VI
+    <input type="checkbox" class="cdkFilter" value="CDK VII" checked> CDK VII
+    <input type="checkbox" class="cdkFilter" value="CDK VIII" checked> CDK VIII
+    <input type="checkbox" class="cdkFilter" value="CDK IX" checked> CDK IX
 </div>
 
 <div id="map"></div>
@@ -67,13 +89,11 @@ var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
 
 osm.addTo(map);
 
-var baseMaps = {
+L.control.layers({
     "OSM": osm,
     "Satelit": esri,
     "Medan": topo
-};
-
-L.control.layers(baseMaps).addTo(map);
+}).addTo(map);
 
 // ================= WARNA CDK =================
 function getColor(cdk){
@@ -109,25 +129,21 @@ chart = new Chart(ctx,{
     }
 });
 
-// ================= LAYER =================
+// ================= LOAD DATA =================
 var geoLayer;
 var batasLayer;
 var allFeatures;
 
-// ================= LOAD BATAS ADMIN =================
+// Batas Administrasi
 fetch("Jawa Barat.geojson")
 .then(res => res.json())
 .then(data => {
     batasLayer = L.geoJSON(data,{
-        style:{
-            color:"black",
-            weight:0.5,
-            fillOpacity:0
-        }
+        style:{ color:black", weight:0.5, fillOpacity:0 }
     }).addTo(map);
 });
 
-// ================= LOAD DATA PJL =================
+// Titik PJL
 fetch("PJL.geojson")
 .then(res => res.json())
 .then(data => {
@@ -145,10 +161,15 @@ function updateMap(){
     let keyword = document.getElementById("search").value.toLowerCase();
     let countCDK = {};
 
+    // Ambil CDK yang dicentang
+    let selectedCDK = [];
+    document.querySelectorAll(".cdkFilter:checked").forEach(function(cb){
+        selectedCDK.push(cb.value);
+    });
+
     geoLayer = L.geoJSON(allFeatures,{
 
         pointToLayer: function(feature){
-
             let lat = parseFloat(feature.properties["koordinat desa (lat)"]);
             let lng = parseFloat(feature.properties["koordinat desa (long)"]);
 
@@ -164,7 +185,8 @@ function updateMap(){
 
         filter: function(feature){
             let p = feature.properties;
-            return (p.nama || "").toLowerCase().includes(keyword);
+            return (p.nama || "").toLowerCase().includes(keyword) &&
+                   selectedCDK.includes(p.cdk);
         },
 
         onEachFeature: function(feature, layer){
@@ -175,6 +197,7 @@ function updateMap(){
                 countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
             }
 
+            // ===== POPUP LENGKAP =====
             layer.bindPopup(`
                 <div style="font-size:13px">
                 <b>DATA PENGURUS JAGA LEUWEUNG</b><hr>
@@ -200,23 +223,22 @@ function updateMap(){
                 Y: ${p["koordinat calon lokasi penanaman (y)"] || "-"}<br>
                 <hr>
                 <b>CDK:</b> ${p.cdk || "-"}<br>
-                <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
+                <b>Penyuluh:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
                 <b>Keterangan:</b> ${p.keterangan || "-"}<br>
                 </div>
             `);
         }
     });
 
-    if(document.getElementById("cdkCheck").checked){
+    if(document.getElementById("pjlCheck").checked){
         geoLayer.addTo(map);
     }
 
     updateChart(countCDK);
 }
 
-// ================= UPDATE CHART =================
+// ================= CHART UPDATE =================
 function updateChart(data){
-
     if(!data || Object.keys(data).length === 0){
         chart.data.labels = ["Tidak ada data"];
         chart.data.datasets[0].data = [0];
@@ -229,14 +251,9 @@ function updateChart(data){
     chart.update();
 }
 
-// ================= CHECKBOX =================
-document.getElementById("cdkCheck").addEventListener("change", function(){
-    if(this.checked){
-        map.addLayer(geoLayer);
-    } else {
-        map.removeLayer(geoLayer);
-    }
-});
+// ================= EVENT =================
+document.getElementById("search").addEventListener("input", updateMap);
+document.getElementById("pjlCheck").addEventListener("change", updateMap);
 
 document.getElementById("batasCheck").addEventListener("change", function(){
     if(this.checked){
@@ -246,8 +263,9 @@ document.getElementById("batasCheck").addEventListener("change", function(){
     }
 });
 
-// ================= SEARCH =================
-document.getElementById("search").addEventListener("input", updateMap);
+document.querySelectorAll(".cdkFilter").forEach(function(cb){
+    cb.addEventListener("change", updateMap);
+});
 
 </script>
 
