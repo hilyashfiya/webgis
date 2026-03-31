@@ -120,7 +120,7 @@
                     if (!lat || !lng) return null;
 
                     return L.circleMarker([lat, lng], {
-                        radius: 6,
+                        radius: 1,
                         color: getColor(feature.properties.cdk),
                         fillColor: getColor(feature.properties.cdk),
                         fillOpacity: 1
@@ -149,7 +149,7 @@
                         <b>Koordinat Penanaman:</b><br>
                         (${p["koordinat calon lokasi penanaman (x)"]}, ${p["koordinat calon lokasi penanaman (y)"]})<br><br>
 
-                        <b>Penyuluh:</b> ${p["penyuluh kehutanan pendamping"]}<br>
+                        <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"]}<br>
                         <b>Keterangan:</b> ${p.keterangan}<br>
                         <b>CDK:</b> ${p.cdk}
                     `);
