@@ -2,18 +2,18 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Pengurus Jaga Leuweung</title> 
+<title>Peta Pengurus Jaga Leuweung</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
 
 <style>
-body { margin: 0; font-family: Arial; }
-h2 { text-align: center; margin: 10px; }
-#map { height: 92vh; }
+body { margin:0; font-family:Arial; }
+h2 { text-align:center; margin:10px; }
+#map { height:92vh; }
 
-.panel {
+.panel{
     position:absolute;
     top:70px;
     left:10px;
@@ -25,15 +25,12 @@ h2 { text-align: center; margin: 10px; }
     font-size:12px;
 }
 
-#search {
-    width:100%;
-    margin-bottom:5px;
-}
+#search{ width:100%; margin-bottom:5px; }
 
-.legend {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
+.legend{
+    background:white;
+    padding:10px;
+    border-radius:5px;
 }
 </style>
 </head>
@@ -44,11 +41,11 @@ h2 { text-align: center; margin: 10px; }
 <div id="map"></div>
 
 <div class="panel">
-    <b>🔍 Cari Nama</b><br>
-    <input type="text" id="search" placeholder="ketik nama...">
-    <hr>
-    <b>Filter CDK</b><br>
-    <div id="filter"></div>
+<b>🔍 Cari Nama</b><br>
+<input type="text" id="search" placeholder="ketik nama...">
+<hr>
+<b>Filter CDK</b><br>
+<div id="filter"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -95,14 +92,14 @@ fetch('Jawa Barat.geojson')
 fetch('PJL.geojson')
 .then(res=>res.json())
 .then(data=>{
-    allData=data.features;
+    allData = data.features;
 
-    let cdkSet=new Set(allData.map(f=>f.properties.cdk));
-    let filterDiv=document.getElementById("filter");
+    let cdkSet = new Set(allData.map(f=>f.properties.cdk));
+    let filterDiv = document.getElementById("filter");
 
     cdkSet.forEach(cdk=>{
         activeCDK.add(cdk);
-        filterDiv.innerHTML+=`
+        filterDiv.innerHTML += `
         <label><input type="checkbox" checked value="${cdk}"> ${cdk}</label><br>`;
     });
 
@@ -122,19 +119,23 @@ fetch('PJL.geojson')
 function updateMap(){
     markers.clearLayers();
 
-    let keyword=document.getElementById("search").value.toLowerCase();
+    let keyword = document.getElementById("search").value.toLowerCase();
 
     allData.forEach(f=>{
-        let p=f.properties;
+        let p = f.properties;
+
+        let nama = (p.nama || "").toLowerCase();
 
         if(!activeCDK.has(p.cdk)) return;
-        if(!p.nama.toLowerCase().includes(keyword)) return;
+        if(!nama.includes(keyword)) return;
 
-        let lat=p["koordinat desa (lat)"];
-        let lng=p["koordinat desa (long)"];
-        if(!lat||!lng) return;
+        // 🔥 FIX UTAMA: KONVERSI ANGKA
+        let lat = parseFloat(p["koordinat desa (lat)"]);
+        let lng = parseFloat(p["koordinat desa (long)"]);
 
-        let marker=L.circleMarker([lat,lng],{
+        if(isNaN(lat) || isNaN(lng)) return;
+
+        let marker = L.circleMarker([lat,lng],{
             radius:1,
             color:"#fff",
             weight:1,
@@ -142,24 +143,23 @@ function updateMap(){
             fillOpacity:0.9
         });
 
-        // POPUP
         marker.bindPopup(`
-            <b>Nama:</b> ${p.nama}<br>
-            <b>NIK:</b> ${p.nik}<br>
-            <b>Usia:</b> ${p["usia(tahun)"]} tahun<br>
-            <b>Alamat:</b> ${p.alamat}<br>
-            <b>Desa:</b> ${p.desa}<br>
-            <b>Kecamatan:</b> ${p.kecamatan}<br>
-            <b>Kabupaten:</b> ${p.kabupaten}<br><br>
+            <b>Nama:</b> ${p.nama || "-"}<br>
+            <b>NIK:</b> ${p.nik || "-"}<br>
+            <b>Usia:</b> ${p["usia(tahun)"] || "-"} tahun<br>
+            <b>Alamat:</b> ${p.alamat || "-"}<br>
+            <b>Desa:</b> ${p.desa || "-"}<br>
+            <b>Kecamatan:</b> ${p.kecamatan || "-"}<br>
+            <b>Kabupaten:</b> ${p.kabupaten || "-"}<br><br>
             <b>Koordinat Desa:</b><br>
-            (${p["koordinat desa (lat)"]}, ${p["koordinat desa (long)"]})<br><br>
+            (${lat}, ${lng})<br><br>
             <b>Koordinat Persemaian:</b><br>
-            (${p["koordinat calon lokasi persemaian (x)"]}, ${p["koordinat calon lokasi persemaian (y)"]})<br><br>
+            (${p["koordinat calon lokasi persemaian (x)"] || "-"}, ${p["koordinat calon lokasi persemaian (y)"] || "-"})<br><br>
             <b>Koordinat Penanaman:</b><br>
-            (${p["koordinat calon lokasi penanaman (x)"]}, ${p["koordinat calon lokasi penanaman (y)"]})<br><br>
-            <b>Penyuluh:</b> ${p["penyuluh kehutanan pendamping"]}<br>
-            <b>Keterangan:</b> ${p.keterangan}<br>
-            <b>CDK:</b> ${p.cdk}
+            (${p["koordinat calon lokasi penanaman (x)"] || "-"}, ${p["koordinat calon lokasi penanaman (y)"] || "-"})<br><br>
+            <b>Penyuluh:</b> ${p["penyuluh kehutanan pendamping"] || "-"}<br>
+            <b>Keterangan:</b> ${p.keterangan || "-"}<br>
+            <b>CDK:</b> ${p.cdk || "-"}
         `);
 
         markers.addLayer(marker);
