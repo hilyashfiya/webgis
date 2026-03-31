@@ -92,7 +92,7 @@ var geoLayer;
 var chart;
 
 // ================= BATAS =================
-fetch('jawa_barat.geojson')
+fetch('Jawa Barat.geojson')
 .then(res=>res.json())
 .then(data=>{
     L.geoJSON(data,{
@@ -101,7 +101,7 @@ fetch('jawa_barat.geojson')
 });
 
 // ================= DATA =================
-fetch('pengurus jaga leuweung.geojson')
+fetch('PJL.geojson')
 .then(res=>res.json())
 .then(data=>{
 
