@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Peta PJL Pengurus Jaga Leuweung</title>
+<title>Peta Pengurus Jaga Leuweung</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -54,7 +54,6 @@ h2{
     padding:8px;
 }
 
-/* legenda */
 .legend {
     background:white;
     padding:8px;
@@ -116,6 +115,12 @@ var allData = [];
 var markersLayer = L.layerGroup().addTo(map);
 var activeCDK = new Set();
 
+// ================= RADIUS DINAMIS =================
+function getRadius(){
+    let z = map.getZoom();
+    return Math.max(4, z * 0.7);
+}
+
 // ================= BATAS =================
 fetch('Jawa Barat.geojson')
 .then(res=>res.json())
@@ -171,40 +176,47 @@ function updateMap(){
         let lat = parseFloat(p["koordinat desa (lat)"]);
         let lng = parseFloat(p["koordinat desa (long)"]);
 
-        // DEBUG kalau error
         if(isNaN(lat) || isNaN(lng)){
-            console.log("Koordinat error:", p.nama, lat, lng);
+            console.log("Koordinat error:", p.nama);
             return;
         }
 
         let warna = getColor(p.cdk);
 
         let marker = L.circleMarker([lat,lng],{
-            radius:1.5, // 🔥 FIX: biar kelihatan
+            radius: getRadius(),
             color:"#fff",
             weight:1,
             fillColor:warna,
             fillOpacity:0.9
         });
 
+        // ================= POPUP LENGKAP =================
         marker.bindPopup(`
-            <b>${p.nama || "-"}</b><hr>
+            <b>📌 DATA PENGURUS JAGA LEUWEUNG</b><hr>
+
+            <b>👤 Identitas</b><br>
+            Nama: ${p.nama || "-"}<br>
             NIK: ${p.nik || "-"}<br>
-            Usia: ${p["usia(tahun)"] || "-"}<br>
+            Usia: ${p["usia(tahun)"] || "-"} tahun<br><br>
+            <b>📍 Alamat</b><br>
+            ${p.alamat || "-"}<br>
             Desa: ${p.desa || "-"}<br>
             Kecamatan: ${p.kecamatan || "-"}<br>
             Kabupaten: ${p.kabupaten || "-"}<br><br>
-            <b>Koordinat Desa:</b><br>
+            <b>🧭 Koordinat Desa</b><br>
             (${lat}, ${lng})<br><br>
-            <b>Koordinat Calon Lokasi Persemaian:</b><br>
+            <b>🌱 Koordinat Calon Lokasi Persemaian</b><br>
             (${p["koordinat calon lokasi persemaian (x)"] || "-"},
              ${p["koordinat calon lokasi persemaian (y)"] || "-"})<br><br>
-            <b>Koordinat Calon Lokasi Penanaman:</b><br>
+            <b>🌳 Koordinat Calon Lokasi Penanaman</b><br>
             (${p["koordinat calon lokasi penanaman (x)"] || "-"},
              ${p["koordinat calon lokasi penanaman (y)"] || "-"})<br><br>
-             ${p["penyuluh kehutanan pendamping"] || "-"}<br><br> <b>
-             Keterangan</b><br> ${p.keterangan || "-"}<br><br>
-            CDK: ${p.cdk || "-"}
+            <b>👨‍🌾 Penyuluh Kehutanan Pendamping</b><br>
+            ${p["penyuluh kehutanan pendamping"] || "-"}<br><br>
+            <b>📝 Keterangan</b><br>
+            ${p.keterangan || "-"}<br><br>
+            <b>🏷️ CDK:</b> ${p.cdk || "-"}
         `);
 
         markersLayer.addLayer(marker);
@@ -212,8 +224,14 @@ function updateMap(){
         countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
     });
 
+    markersLayer.bringToFront(); // 🔥 biar tidak ketutup polygon
     updateChart(countCDK);
 }
+
+// ================= ZOOM EVENT =================
+map.on("zoomend", function(){
+    updateMap();
+});
 
 // ================= CHART =================
 var chart;
