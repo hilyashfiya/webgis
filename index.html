@@ -32,53 +32,34 @@ body { margin: 0; font-family: Arial; }
     position: absolute;
     top: 80px;
     left: 10px;
-    width: 260px;
+    width: 220px;
     background: #2e7d32;
     color: white;
     padding: 15px;
     border-radius: 10px;
     z-index: 1000;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.panel input {
-    width: 100%;
-    padding: 6px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border: none;
-}
-
-.panel button {
-    width: 100%;
-    padding: 6px;
-    border: none;
-    border-radius: 5px;
-    background: #1b5e20;
-    color: white;
-    cursor: pointer;
 }
 
 /* SUMMARY */
 .summary {
     position: absolute;
     bottom: 240px;
-    right: 15px;
-    width: 300px;
+    left: 10px;
+    width: 260px;
     background: white;
     padding: 10px;
     border-radius: 10px;
     z-index: 1000;
+    font-size: 13px;
 }
 
 /* CHART */
 .chartBox {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
-    width: 300px;
-    height: 220px;
+    bottom: 10px;
+    left: 10px;
+    width: 260px;
+    height: 200px;
     background: white;
     padding: 10px;
     border-radius: 10px;
@@ -101,9 +82,8 @@ body { margin: 0; font-family: Arial; }
 <div class="titleMap">Sebaran Pengurus Jaga Leuweung Provinsi Jawa Barat</div>
 
 <div class="panel">
-    <b>🔍 Cari (Nama / Desa / CDK)</b>
-    <input type="text" id="searchInput">
-    <button onclick="resetFilter()">Reset Filter</button>
+    <b>Filter CDK (Klik Legenda)</b><br><br>
+    <button onclick="resetFilter()">Tampilkan Semua CDK</button>
 </div>
 
 <div class="summary" id="summaryBox"></div>
@@ -131,7 +111,7 @@ L.control.layers({
     "Medan": medan
 }).addTo(map);
 
-// WARNA
+// WARNA CDK
 function getColor(cdk){
     return {
         "CDK I":"red","CDK II":"blue","CDK III":"green",
@@ -140,15 +120,26 @@ function getColor(cdk){
     }[cdk] || "yellow";
 }
 
-// HANDLE NULL
+// DATA KOSONG
 function isiData(v){
     return (!v || v=="") ? "Data Tidak Tersedia" : v;
 }
 
-var allData, pjlLayer, chart;
+var batasLayer, pjlLayer, chart;
+var allData;
+
 let activeCDK = ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"];
 
-// LOAD DATA
+// LOAD BATAS ADMINISTRASI (SELALU TAMPIL)
+fetch("Jawa Barat.geojson")
+.then(res=>res.json())
+.then(data=>{
+    batasLayer = L.geoJSON(data,{
+        style:{color:"black",weight:0.5,fillOpacity:0}
+    }).addTo(map);
+});
+
+// LOAD PJL
 fetch("PJL.geojson")
 .then(res=>res.json())
 .then(data=>{
@@ -161,28 +152,17 @@ function updateMap(){
 
     if(pjlLayer) map.removeLayer(pjlLayer);
 
-    let keyword = document.getElementById("searchInput").value.toLowerCase();
-
     let countCDK = {};
     let boundsByCDK = {};
     let total = 0;
-    let bounds = [];
 
     pjlLayer = L.geoJSON(allData,{
         filter: function(f){
-            let p = f.properties;
-            return activeCDK.includes(p.cdk) &&
-            (
-            (p.nama||"").toLowerCase().includes(keyword) ||
-            (p.desa||"").toLowerCase().includes(keyword) ||
-            (p.cdk||"").toLowerCase().includes(keyword)
-            );
+            return activeCDK.includes(f.properties.cdk);
         },
 
         pointToLayer: function(f,latlng){
-            let warna = keyword ? "yellow" : getColor(f.properties.cdk);
-
-            bounds.push(latlng);
+            let warna = getColor(f.properties.cdk);
             total++;
 
             return L.circleMarker(latlng,{
@@ -226,23 +206,17 @@ function updateMap(){
         }
     }).addTo(map);
 
-    if(bounds.length && keyword){
-        map.fitBounds(bounds);
-    }
-
     updateSummary(countCDK,total);
     updateChart(countCDK,boundsByCDK);
 }
 
 // SUMMARY TOP 3
 function updateSummary(data,total){
-
     let sorted = Object.entries(data)
     .sort((a,b)=>b[1]-a[1])
     .slice(0,3);
 
-    let html = "<b>Top 3 CDK</b><br>Total: "+total+"<br><br>";
-
+    let html = "<b>Top 3 CDK</b><br>Total Titik: "+total+"<br><br>";
     sorted.forEach(d=>{
         html += d[0]+" : "+d[1]+"<br>";
     });
@@ -278,7 +252,7 @@ function updateChart(data,boundsByCDK){
                 legend:{display:false},
                 title:{
                     display:true,
-                    text:'Klik Bar untuk Filter & Zoom'
+                    text:'Klik Bar = Filter & Zoom'
                 }
             }
         }
@@ -287,20 +261,15 @@ function updateChart(data,boundsByCDK){
 
 // RESET
 function resetFilter(){
-    document.getElementById("searchInput").value="";
     activeCDK = ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"];
     updateMap();
 }
-
-// SEARCH EVENT
-document.getElementById("searchInput").addEventListener("keyup",updateMap);
 
 // LEGENDA INTERAKTIF
 var legend = L.control({position:"topright"});
 
 legend.onAdd = function(){
     var div = L.DomUtil.create("div","legend");
-
     div.innerHTML = "<b>Klik CDK</b><br>";
 
     ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"]
@@ -320,9 +289,8 @@ legend.onAdd = function(){
 
 legend.addTo(map);
 
-// TOGGLE
+// TOGGLE CDK
 function toggleCDK(cdk){
-
     if(activeCDK.includes(cdk)){
         activeCDK = activeCDK.filter(c=>c!==cdk);
     } else {
