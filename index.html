@@ -1,89 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <title>WebGIS Pengurus Jaga Leuweung</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<title>Pengurus Jaga Leuweung</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { margin: 0; font-family: Arial; }
+#map { height: 100vh; }
 
-    <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
+/* PANEL DINAS (HIJAU) */
+.panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 260px;
+    background: #2e7d32;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 1000;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
 
-        #map { height: 100vh; }
+.panel h3 {
+    margin-top: 0;
+    text-align: center;
+}
 
-        /* PANEL KIRI */
-        .panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 260px;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
+.panel input[type="text"] {
+    width: 100%;
+    padding: 6px;
+    border-radius: 5px;
+    border: none;
+    margin-bottom: 10px;
+}
 
-        .panel h3 {
-            margin-top: 0;
-            font-size: 16px;
-            text-align: center;
-        }
+.panel label {
+    display: block;
+    margin-bottom: 5px;
+}
 
-        .panel input {
-            width: 100%;
-            padding: 6px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+/* CHART */
+.chartBox {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    width: 280px;
+    height: 180px;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 1000;
+}
 
-        .panel label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        /* GRAFIK POJOK KANAN BAWAH */
-        .chartBox {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            height: 200px;
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
-    </style>
+/* LEGENDA */
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+</style>
 </head>
+
 <body>
 
 <div id="map"></div>
 
 <!-- PANEL -->
 <div class="panel">
-    <h3>Filter Data Peserta</h3>
+    <h3>🌿 WebGIS PJL</h3>
 
-    <input type="text" id="searchInput" placeholder="Cari Nama...">
+    <b>🔍 Cari Nama</b>
+    <input type="text" id="searchInput" placeholder="Cari nama...">
 
-    <b>Filter CDK:</b>
-    <label><input type="checkbox" value="CDK I" checked> CDK I</label>
-    <label><input type="checkbox" value="CDK II" checked> CDK II</label>
-    <label><input type="checkbox" value="CDK III" checked> CDK III</label>
-    <label><input type="checkbox" value="CDK IV" checked> CDK IV</label>
-    <label><input type="checkbox" value="CDK V" checked> CDK V</label>
-    <label><input type="checkbox" value="CDK VI" checked> CDK VI</label>
-    <label><input type="checkbox" value="CDK VII" checked> CDK VII</label>
-    <label><input type="checkbox" value="CDK VIII" checked> CDK VIII</label>
-    <label><input type="checkbox" value="CDK IX" checked> CDK IX</label>
+    <b>🗺️ Layer</b>
+    <label><input type="checkbox" id="toggleBatas" checked> Batas Administrasi</label>
+    <label><input type="checkbox" id="togglePJL" checked> Titik PJL</label>
+
+    <b>📊 Filter CDK</b>
+    <label><input type="checkbox" class="cdk" value="CDK I" checked> CDK I</label>
+    <label><input type="checkbox" class="cdk" value="CDK II" checked> CDK II</label>
+    <label><input type="checkbox" class="cdk" value="CDK III" checked> CDK III</label>
+    <label><input type="checkbox" class="cdk" value="CDK IV" checked> CDK IV</label>
+    <label><input type="checkbox" class="cdk" value="CDK V" checked> CDK V</label>
+    <label><input type="checkbox" class="cdk" value="CDK VI" checked> CDK VI</label>
+    <label><input type="checkbox" class="cdk" value="CDK VII" checked> CDK VII</label>
+    <label><input type="checkbox" class="cdk" value="CDK VIII" checked> CDK VIII</label>
+    <label><input type="checkbox" class="cdk" value="CDK IX" checked> CDK IX</label>
 </div>
 
-<!-- GRAFIK -->
+<!-- CHART -->
 <div class="chartBox">
     <canvas id="chartCDK"></canvas>
 </div>
@@ -91,140 +102,148 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-var map = L.map('map').setView([-6.9, 107.6], 9);
+// MAP
+var map = L.map('map').setView([-6.9,107.6],9);
 
-// Basemap
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: 'OpenStreetMap'
-}).addTo(map);
+// BASEMAP
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// Warna CDK
-function getColor(cdk) {
-    return cdk === "CDK I" ? "red" :
-           cdk === "CDK II" ? "blue" :
-           cdk === "CDK III" ? "green" :
-           cdk === "CDK IV" ? "orange" :
-           cdk === "CDK V" ? "purple" :
-           cdk === "CDK VI" ? "brown" :
-           cdk === "CDK VII" ? "pink" :
-           cdk === "CDK VIII" ? "gray" :
-           cdk === "CDK IX" ? "black" :
-           "yellow";
+// WARNA CDK
+function getColor(cdk){
+    return {
+        "CDK I":"red","CDK II":"blue","CDK III":"green",
+        "CDK IV":"orange","CDK V":"purple","CDK VI":"brown",
+        "CDK VII":"pink","CDK VIII":"gray","CDK IX":"black"
+    }[cdk] || "yellow";
 }
 
-var geojsonLayer;
-var chart;
+var batasLayer, pjlLayer, chart;
+var allData;
 
-// Batas Administrasi Jawa Barat
+// ================= BATAS =================
 fetch("Jawa Barat.geojson")
-.then(res => res.json())
-.then(data => {
-    var batasJabar = L.geoJSON(data, {
-        style: {
-            color: "black",
-            weight: 0.5,
-            fillOpacity: 0
-        }
+.then(res=>res.json())
+.then(data=>{
+    batasLayer = L.geoJSON(data,{
+        style:{color:"black",weight:0.5,fillOpacity:0}
     }).addTo(map);
 
-    map.fitBounds(batasJabar.getBounds());
+    map.fitBounds(batasLayer.getBounds());
 });
 
-// Load GeoJSON
+// ================= PJL =================
 fetch("PJL.geojson")
-.then(res => res.json())
-.then(data => {
-
-    function filterData(feature) {
-        var keyword = document.getElementById("searchInput").value.toLowerCase();
-        var checked = Array.from(document.querySelectorAll("input[type=checkbox]:checked"))
-                            .map(cb => cb.value);
-
-        return checked.includes(feature.properties.cdk) &&
-               feature.properties.nama.toLowerCase().includes(keyword);
-    }
-
-    function updateMap() {
-
-        if (geojsonLayer) map.removeLayer(geojsonLayer);
-
-        var countCDK = {};
-
-        geojsonLayer = L.geoJSON(data, {
-            filter: function(feature) {
-                return filterData(feature);
-            },
-
-            pointToLayer: function(feature, latlng) {
-                return L.circleMarker(latlng, {
-                    radius: 1,
-                    fillColor: getColor(feature.properties.cdk),
-                    color: "#000",
-                    weight: 1,
-                    fillOpacity: 0.9
-                });
-            },
-
-            onEachFeature: function(feature, layer) {
-                var p = feature.properties;
-
-                layer.bindPopup(`
-                    <b>Nama:</b> ${p.nama}<br>
-                    <b>NIK:</b> ${p.nik}<br>
-                    <b>Usia:</b> ${p["usia(tahun)"]} tahun<br>
-                    <b>Alamat:</b> ${p.alamat}<br>
-                    <b>Desa:</b> ${p.desa}<br>
-                    <b>Kecamatan:</b> ${p.kecamatan}<br>
-                    <b>Kabupaten:</b> ${p.kabupaten}<br><br>
-                    <b>Koordinat Desa:</b><br>
-                    (${p["koordinat desa (lat)"]}, ${p["koordinat desa (long)"]})<br><br>
-                    <b>Koordinat Calon Lokasi Persemaian:</b><br>
-                    (${p["koordinat calon lokasi persemaian (x)"]}, ${p["koordinat calon lokasi persemaian (y)"]})<br><br>
-                    <b>Koordinat Calon Lokasi Penanaman:</b><br>
-                    (${p["koordinat calon lokasi penanaman (x)"]}, ${p["koordinat calon lokasi penanaman (y)"]})<br><br>
-                    <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"]}<br>
-                    <b>Keterangan:</b> ${p.keterangan}<br>
-                    <b>CDK:</b> ${p.cdk}
-                `);
-
-                // Hitung grafik
-                countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
-            }
-        }).addTo(map);
-
-        updateChart(countCDK);
-    }
-
-    function updateChart(countCDK) {
-        var ctx = document.getElementById('chartCDK');
-
-        if (chart) chart.destroy();
-
-        chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(countCDK),
-                datasets: [{
-                    label: 'Jumlah Peserta',
-                    data: Object.values(countCDK)
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false }
-                }
-            }
-        });
-    }
-
-    document.getElementById("searchInput").addEventListener("keyup", updateMap);
-    document.querySelectorAll("input[type=checkbox]").forEach(cb => {
-        cb.addEventListener("change", updateMap);
-    });
-
+.then(res=>res.json())
+.then(data=>{
+    allData = data;
     updateMap();
 });
+
+// ================= UPDATE =================
+function updateMap(){
+
+    if(pjlLayer) map.removeLayer(pjlLayer);
+
+    let keyword = document.getElementById("searchInput").value.toLowerCase();
+    let selectedCDK = [...document.querySelectorAll(".cdk:checked")].map(i=>i.value);
+
+    let countCDK = {};
+
+    pjlLayer = L.geoJSON(allData,{
+        filter: function(f){
+            let p = f.properties;
+            return selectedCDK.includes(p.cdk) &&
+                   (p.nama||"").toLowerCase().includes(keyword);
+        },
+
+        pointToLayer: function(f,latlng){
+            return L.circleMarker(latlng,{
+                radius:1,
+                color:getColor(f.properties.cdk),
+                fillColor:getColor(f.properties.cdk),
+                fillOpacity:1
+            });
+        },
+
+        onEachFeature: function(f,l){
+            let p = f.properties;
+
+            l.bindPopup(`
+            <b>Nama:</b> ${p.nama}<br>
+            <b>NIK:</b> ${p.nik}<br>
+            <b>Usia:</b> ${p["usia(tahun)"]} tahun<br>
+            <b>Alamat:</b> ${p.alamat}<br>
+            <b>Desa:</b> ${p.desa}<br>
+            <b>Kecamatan:</b> ${p.kecamatan}<br>
+            <b>Kabupaten:</b> ${p.kabupaten}<br><br>
+            <b>Koordinat Desa:</b><br>
+            (${p["koordinat desa (lat)"]}, ${p["koordinat desa (long)"]})<br><br>
+            <b>Koordinat Calon Lokasi Persemaian:</b><br>
+            (${p["koordinat calon lokasi persemaian (x)"]}, ${p["koordinat calon lokasi persemaian (y)"]})<br><br>
+            <b>Koordinat Calon Lokasi Penanaman:</b><br>
+            (${p["koordinat calon lokasi penanaman (x)"]}, ${p["koordinat calon lokasi penanaman (y)"]})<br><br>
+            <b>Penyuluh Kehutanan Pendamping:</b> ${p["penyuluh kehutanan pendamping"]}<br>
+            <b>Keterangan:</b> ${p.keterangan}<br>
+            <b>CDK:</b> ${p.cdk}
+            `);
+
+            countCDK[p.cdk] = (countCDK[p.cdk] || 0) + 1;
+        }
+    });
+
+    if(document.getElementById("togglePJL").checked){
+        pjlLayer.addTo(map);
+    }
+
+    updateChart(countCDK);
+}
+
+// ================= CHART =================
+function updateChart(data){
+    if(chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("chartCDK"),{
+        type:'bar',
+        data:{
+            labels:Object.keys(data),
+            datasets:[{data:Object.values(data)}]
+        },
+        options:{
+            responsive:true,
+            plugins:{legend:{display:false}}
+        }
+    });
+}
+
+// ================= TOGGLE =================
+document.getElementById("toggleBatas").addEventListener("change",function(){
+    if(this.checked){
+        map.addLayer(batasLayer);
+    } else {
+        map.removeLayer(batasLayer);
+    }
+});
+
+document.getElementById("togglePJL").addEventListener("change",updateMap);
+document.getElementById("searchInput").addEventListener("keyup",updateMap);
+document.querySelectorAll(".cdk").forEach(cb=>{
+    cb.addEventListener("change",updateMap);
+});
+
+// ================= LEGENDA =================
+var legend = L.control({position:"topright"});
+legend.onAdd = function(){
+    var div = L.DomUtil.create("div","legend");
+    div.innerHTML = "<b>Legenda CDK</b><br>";
+    ["CDK I","CDK II","CDK III","CDK IV","CDK V","CDK VI","CDK VII","CDK VIII","CDK IX"]
+    .forEach(c=>{
+        div.innerHTML += `<i style="background:${getColor(c)};
+        width:10px;height:10px;display:inline-block;"></i> ${c}<br>`;
+    });
+    return div;
+};
+legend.addTo(map);
+
 </script>
 
 </body>
